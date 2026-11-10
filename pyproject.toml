@@ -1,0 +1,23 @@
+[project]
+name = "visual-language-action-model"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "sandhya", email = "sandhyaa@presidio.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "lerobot>=0.4.4",
+    "matplotlib>=3.11.2",
+    "mujoco>=4.0.0",
+    "numpy>=2.5.4",
+    "opencv-python>=5.0.0.93",
+]
+
+[project.scripts]
+visual-language-action-model = "visual_language_action_model:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"

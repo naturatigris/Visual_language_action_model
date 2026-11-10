@@ -1,0 +1,7 @@
+WARNING Tue Nov 10 13:54:52 2026: Attach conflict when attaching 'panda' to 'tabletop', policy is 'warning'
+integrator: parent has 0 (default), child has 3, keeping parent value
+
+WARNING Tue Nov 10 13:54:52 2026: Attaching a spec with an empty prefix may prevent the model from being saved correctly.
+
+WARNING Tue Nov 10 13:57:38 2026: Attaching a spec with an empty prefix may prevent the model from being saved correctly.
+
