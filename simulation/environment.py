@@ -1,4 +1,4 @@
-"""Tabletop scene: Franka Panda mounted on a table with three coloured cubes.
+"""Tabletop scene: Franka Panda mounted on a table with three coloured cubes and a container.
 
 Run the viewer:  uv run python -m simulation.environment
 """
@@ -21,6 +21,12 @@ CUBES = {
     "blue_cube":  ("0.15 0.30 0.85 1", (0.50,  0.15)),
 }
 
+# Open-top container (fixed to the table) that the cubes get placed into.
+CONTAINER_XY = (0.45, 0.33)
+CONTAINER_HALF = 0.07         # outer half-width: 14 x 14 cm footprint, ~12 cm inside
+CONTAINER_WALL_HALF = 0.005   # walls and floor are 1 cm thick
+CONTAINER_HEIGHT = 0.05       # wall height (m), low enough for the gripper to drop over
+
 # Panda "home" pose from Menagerie's panda.xml: 7 arm joints + 2 fingers, and 8 actuator targets.
 HOME_ARM_QPOS = [0, 0, 0, -1.57079, 0, 1.57079, -0.7853]
 HOME_FINGER_QPOS = [0.04, 0.04]
@@ -32,7 +38,7 @@ ROBOT_JOINTS = [f"{ROBOT_PREFIX}joint{i}" for i in range(1, 8)] + [
 
 
 def _scene_xml() -> str:
-    """Everything except the robot: floor, table, cubes, lights and camera."""
+    """Everything except the robot: floor, table, container, cubes, lights and camera."""
     top = TABLE_TOP_Z
     leg_h = (top - 0.04) / 2
     cubes = "\n".join(
@@ -48,6 +54,33 @@ def _scene_xml() -> str:
         f'      <geom type="box" size="0.025 0.025 {leg_h}" pos="{lx} {ly} {leg_h}" material="table_leg"/>'
         for lx in (-0.15, 0.85) for ly in (-0.40, 0.40)
     )
+    return _template(top, legs, cubes, _container_xml())
+
+
+def _container_xml() -> str:
+    """A static open-top box: a thin floor plate plus four walls, with a site at the inside centre."""
+    h, t = CONTAINER_HALF, CONTAINER_WALL_HALF
+    wall_hz = CONTAINER_HEIGHT / 2
+    x, y = CONTAINER_XY
+    walls = [
+        (f"{t} {h} {wall_hz}",  f"{h - t} 0 {wall_hz}"),    # +x wall
+        (f"{t} {h} {wall_hz}",  f"{-(h - t)} 0 {wall_hz}"),  # -x wall
+        (f"{h} {t} {wall_hz}",  f"0 {h - t} {wall_hz}"),    # +y wall
+        (f"{h} {t} {wall_hz}",  f"0 {-(h - t)} {wall_hz}"),  # -y wall
+    ]
+    wall_geoms = "\n".join(
+        f'      <geom name="container_wall{i}" type="box" size="{size}" pos="{pos}" material="container"/>'
+        for i, (size, pos) in enumerate(walls)
+    )
+    return f"""
+    <body name="container" pos="{x} {y} {TABLE_TOP_Z}">
+      <geom name="container_floor" type="box" size="{h} {h} {t}" pos="0 0 {t}" material="container"/>
+{wall_geoms}
+      <site name="container_center" pos="0 0 {2 * t}" size="0.01" rgba="1 1 0 0"/>
+    </body>"""
+
+
+def _template(top: float, legs: str, cubes: str, container: str) -> str:
     return f"""
 <mujoco model="tabletop">
   <option integrator="implicitfast"/>  <!-- same integrator as Menagerie's panda.xml -->
@@ -64,6 +97,7 @@ def _scene_xml() -> str:
     <material name="floor" texture="floor" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
     <material name="table_top" rgba="0.62 0.47 0.33 1"/>
     <material name="table_leg" rgba="0.35 0.27 0.20 1"/>
+    <material name="container" rgba="0.85 0.85 0.80 1"/>
   </asset>
 
   <worldbody>
@@ -75,6 +109,7 @@ def _scene_xml() -> str:
       <geom name="table_top" type="box" size="0.55 0.45 0.02" pos="0.35 0 {top - 0.02}" material="table_top"/>
 {legs}
     </body>
+{container}
 {cubes}
 
     <!-- Fixed camera in front of the table, looking back at the robot and cubes -->

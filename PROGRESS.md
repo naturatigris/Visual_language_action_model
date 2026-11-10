@@ -22,12 +22,13 @@ _Last updated: 2026-11-10_
 ### Phase 1: MuJoCo works ✅
 - A falling box/ball test confirmed physics and the viewer work. `main.py` now opens the tabletop scene instead.
 
-### Phase 2: Robot + tabletop scene ✅ (container still to add)
+### Phase 2: Robot + tabletop scene ✅
 - Only the Panda folder of MuJoCo Menagerie was sparse-cloned, into `assets/mujoco_menagerie/franka_emika_panda/`. It is git-ignored.
   - To re-download: `git clone --depth 1 --filter=blob:none --sparse https://github.com/google-deepmind/mujoco_menagerie.git assets/mujoco_menagerie && cd assets/mujoco_menagerie && git sparse-checkout set franka_emika_panda`
 - `simulation/environment.py` contains:
   - A table (top at z = 0.40 m) with the Panda mounted at the origin on the table top.
   - Red, green and blue 5 cm cubes with freejoints at x = 0.5, y = -0.15 / 0 / +0.15.
+  - A static open-top `container` (off-white, 14×14 cm outside, 5 cm walls, 1 cm thick) at xy (0.45, 0.33). It has no joint, so `qpos` is unchanged. The site `container_center` sits on the inside floor (z = 0.41), for success checks.
   - `front_camera` at pos (1.6, 0, 1.3), which sees the whole arm, the gripper and all cubes.
   - `build_model()`, which loads `panda.xml` with `MjSpec` and attaches it with the prefix `panda/`. It also adds a full-scene `home` keyframe.
   - `reset_to_home(model, data)`.
@@ -60,9 +61,8 @@ _Last updated: 2026-11-10_
 ## Next steps
 
 1. Fix the git push (above).
-2. Add the **container** to the scene (`simulation/environment.py`).
-3. Add `simulation/camera.py`: a reusable `Renderer` and saving camera images (Step 7).
-4. **Phase 3:** inspect joints and actuators (Step 8), write `simulation/controller.py` with Jacobian IK → joint targets plus gripper (Step 9), then the scripted pick-and-place expert (Step 10).
+2. Add `simulation/camera.py`: a reusable `Renderer` and saving camera images (Step 7).
+3. **Phase 3:** inspect joints and actuators (Step 8), write `simulation/controller.py` with Jacobian IK → joint targets plus gripper (Step 9), then the scripted pick-and-place expert (Step 10).
 
 ### Open suggestion (not yet added to PLAN.md)
 Add "does it really understand?" tests to Phase 7:
