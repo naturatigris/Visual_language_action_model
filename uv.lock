@@ -3123,15 +3123,17 @@ dependencies = [
     { name = "mujoco" },
     { name = "numpy" },
     { name = "opencv-python" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "lerobot", specifier = ">=0.4.4" },
+    { name = "lerobot", specifier = "==0.4.4" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "mujoco", specifier = ">=4.0.0" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "opencv-python", specifier = ">=5.0.0.93" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 
 [[package]]

@@ -8,11 +8,12 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "lerobot>=0.4.4",
+    "lerobot==0.4.4",
     "matplotlib>=3.11.2",
     "mujoco>=4.0.0",
     "numpy>=2.5.4",
     "opencv-python>=5.0.0.93",
+    "pyyaml>=6.0.3",
 ]
 
 [project.scripts]

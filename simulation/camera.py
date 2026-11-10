@@ -13,7 +13,7 @@ import numpy as np
 from simulation.environment import PROJECT_DIR, build_model, reset_to_home
 
 DEFAULT_SIZE = (256, 256)          # (height, width); matches observation.images.front in PLAN.md
-DEFAULT_CAMERAS = ("front_camera",)
+DEFAULT_CAMERAS = ("front_camera", "wrist_camera")
 OUTPUT_DIR = PROJECT_DIR / "outputs" / "camera"
 
 

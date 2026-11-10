@@ -1,0 +1,26 @@
+# Simulation settings shared by data collection, training and evaluation.
+# Changing anything here after recording demos makes the dataset inconsistent: re-record.
+
+fps: 20                       # policy / action rate (Hz); physics runs at 500 Hz underneath
+
+camera:
+  names: [front_camera, wrist_camera]   # -> observation.images.front, observation.images.wrist
+  height: 256
+  width: 256
+
+# Which cubes an instruction may ask for. The other cubes stay on the table as distractors.
+targets: [red_cube, blue_cube]
+
+randomization:
+  # All three cubes and the container are sampled in this table region (metres, robot base at origin),
+  # rejecting layouts where objects are too close. Cube yaw is not randomized yet (top-down grasp has fixed yaw).
+  x_range: [0.36, 0.62]
+  y_range: [-0.30, 0.30]
+  min_cube_spacing: 0.09      # centre-to-centre between cubes
+  min_container_spacing: 0.15 # cube centre to container centre (container is 14 cm wide)
+  max_attempts: 1000
+
+success:
+  timeout_s: 20.0             # an episode fails if not done by then
+  arm_clearance: 0.05         # TCP must be this far above the container rim
+  wrong_object_lift: 0.03     # a non-target cube raised this much counts as touched/lifted
