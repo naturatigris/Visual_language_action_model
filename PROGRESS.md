@@ -37,6 +37,12 @@ _Last updated: 2026-11-10_
   - `actuator8` is the gripper: 0 = closed, 255 = open.
   - The cubes' freejoints come **first** in `qpos`, so always look up a joint's slot with `model.joint(name).qposadr`.
 
+### Step 7: Camera capture ✅
+- `simulation/camera.py` has `CameraRenderer(model, height=256, width=256, cameras=("front_camera",))`, with `.render(data, camera)` (returns RGB uint8 HxWx3), `.render_all(data)` and `.close()`. It works as a context manager. Make it once and reuse it.
+- `save_image(rgb, path)` flips the image to BGR for OpenCV.
+- `uv run python -m simulation.camera` saves a 256×256 image and a 640×480 preview to `outputs/` (git-ignored).
+- At 256×256 all three cubes and the container are visible, but each cube is only about 8 px wide. Think about moving `front_camera` closer or narrowing the FOV, or adding a `wrist_camera`.
+
 **Run the scene:** `uv run python main.py` (or `uv run python -m simulation.environment`)
 - In the viewer, use **Simulation → Load key** to return to the home pose. Don't press Backspace: it resets every joint to zero.
 
@@ -61,8 +67,7 @@ _Last updated: 2026-11-10_
 ## Next steps
 
 1. Fix the git push (above).
-2. Add `simulation/camera.py`: a reusable `Renderer` and saving camera images (Step 7).
-3. **Phase 3:** inspect joints and actuators (Step 8), write `simulation/controller.py` with Jacobian IK → joint targets plus gripper (Step 9), then the scripted pick-and-place expert (Step 10).
+2. **Phase 3:** inspect joints and actuators (Step 8), write `simulation/controller.py` with Jacobian IK → joint targets plus gripper (Step 9), then the scripted pick-and-place expert (Step 10).
 
 ### Open suggestion (not yet added to PLAN.md)
 Add "does it really understand?" tests to Phase 7:

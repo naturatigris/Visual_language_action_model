@@ -11,3 +11,7 @@ wheels/
 
 # Third-party robot models (cloned separately)
 assets/mujoco_menagerie/
+
+# Generated images, datasets, checkpoints
+outputs/
+MUJOCO_LOG.TXT
