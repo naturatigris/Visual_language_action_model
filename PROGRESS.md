@@ -16,6 +16,9 @@ _Last updated: 2026-11-11_
 ### Environment setup
 - uv project, created by the user with `uv init --package`. Python 3.12 is pinned in `.python-version`.
 - Installed: `mujoco` 4.0.0, `lerobot`, `numpy`, `opencv-python`, `matplotlib` (see `pyproject.toml`).
+- SmolVLA's extra packages were added with `uv add "lerobot[smolvla]==0.4.4"`, which installed `transformers` 4.57.6, `accelerate` 1.15.0, `num2words` and `safetensors`.
+  - The SmolVLA **code** ships inside `lerobot` (`lerobot/policies/smolvla/`); the extra only adds what it imports.
+  - The **weights** (`lerobot/smolvla_base`, about 1 GB) download from the HF Hub on first use and are cached in `~/.cache/huggingface/`.
 - **Always run with `uv run ...`.** It uses `.venv/` automatically; plain `python` is the system 3.9.
 - To clear the IDE warning "Import mujoco could not be resolved", set the interpreter to `.venv/bin/python`.
 
