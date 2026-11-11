@@ -146,3 +146,7 @@ Quick test run: `uv run python -m data.collect --episodes 3 --name test --overwr
 ## Next steps
 
 1. Phase 5: SmolVLA fine-tuning in the cloud (`training/`, `training/smolvla_finetune.md`), using `--dataset.repo_id=sandhya056/panda_pick_place`.
+   - Reference Colab notebook (official HF SmolVLA training): https://colab.research.google.com/github/huggingface/notebooks/blob/main/lerobot/training-smolvla.ipynb
+   - In the notebook, pin `lerobot[smolvla]==0.4.4` (to match local) and set `HF_TOKEN`, because the dataset is private.
+   - First run is on **Kaggle**, with lerobot **0.7.1** from git main (not 0.4.4) and transformers 5.22. Before Phase 6, upgrade local lerobot to 0.7.1 or check that the checkpoint loads under 0.4.4.
+   - `smolvla_base` expects the cameras `observation.images.camera1/2/3` and a 6-D state/action. Map ours with `--rename_map='{"observation.images.front": "observation.images.camera1", "observation.images.wrist": "observation.images.camera2"}'`. The 8-D state/action is padded to 32 internally.
