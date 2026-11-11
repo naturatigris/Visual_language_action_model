@@ -8,10 +8,10 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "lerobot[smolvla]==0.4.4",
+    "lerobot[smolvla,dataset,dataset-viz]==0.7.0",
     "matplotlib>=3.11.2",
     "mujoco>=4.0.0",
-    "numpy>=2.5.4",
+    "numpy>=2.0",
     "opencv-python>=5.0.0.93",
     "pyyaml>=6.0.3",
 ]

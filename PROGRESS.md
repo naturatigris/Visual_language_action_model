@@ -136,6 +136,29 @@ uv run python -m data.push_dataset --name panda_pick_place
 
 Quick test run: `uv run python -m data.collect --episodes 3 --name test --overwrite`, then step 2 with `--name test`. Don't push the test set.
 
+### LeRobot upgraded to 0.7.0 ✅
+- `pyproject.toml` now has `lerobot[smolvla,dataset,dataset-viz]==0.7.0`, to match the Kaggle training run (0.7.1 from git main; 0.7.0 is the latest PyPI release). In 0.7 the dataset code is behind the `dataset` extra. `numpy` is relaxed to `>=2.0`, because lerobot 0.7 needs numpy < 2.3. transformers is now 5.22.
+- `data/inspect_dataset.py` still passes all 9 checks under 0.7.0.
+- Harmless warning: torchcodec can't load its dylib on this Mac, so video decoding falls back to pyav.
+
+### Phase 6, Steps 21–23: closed-loop code ✅ (waiting on the trained checkpoint)
+- `policies/smolvla_policy.py`, `SmolVLAController(checkpoint, device, n_action_steps)`:
+  - builds the policy the same way `lerobot-train` does, using `make_policy`, the rename map (`front` → `camera1`, `wrist` → `camera2`) and normalization stats from `panda_pick_place`, so it works for both `lerobot/smolvla_base` and the fine-tuned checkpoint;
+  - `act(obs, instruction)` returns `[7 joint targets, gripper]`, with the gripper snapped to 0/255;
+  - `reset()` runs every episode;
+  - `will_replan` is True when the next call runs the network.
+- `inference/run_robot.py` runs the closed loop on held-out seeds (≥ 100000) by default: clip to joint limits → `apply_action` → stop on success or a wrong object. It saves an optional front|wrist video and prints latency.
+  - `uv run python -m inference.run_robot --checkpoint lerobot/smolvla_base --episodes 2 --max-seconds 5 --video outputs/smolvla/base_test.mp4` runs end to end (0% success, as expected for the untrained model).
+  - Options: `--split eval` (held-out paraphrases), `--target red|blue`, `--instruction "..."`, `--n-action-steps N`, `--view` (with `uv run mjpython`).
+- **Latency on the M4 Pro (mps):** about 290 ms per 50-action chunk, about 15 ms per step on average with `n_action_steps=25`, i.e. about 66 Hz achievable vs 20 Hz control. The first call warms up and takes about 5 s. The first load downloads about 1 GB of SmolVLM weights (about 8 min); after that it's cached.
+
+### First trained checkpoint tested (2026-11-12)
+- `sandhya056/smolvla_panda_pick_place` (private): Kaggle T4, **1,000 steps, batch 32, AMP** (about 1 epoch, the pipeline-test run).
+- `main.py` is now the entry point and runs this model by default (all `inference/run_robot.py` options apply). The scene viewer moved to `uv run python -m simulation.environment`.
+- **Closed loop: 0/4 success** with `n_action_steps` 25 and with 10. All 4 episodes timed out; none touched the wrong object. The arm reaches down near the cubes and sometimes moves toward the correct colour, but it bumps cubes and never grasps. Video: `outputs/smolvla/trained_1k.mp4`.
+- **Offline check on dataset frames:** mean joint error vs the expert is 0.020 rad (the expert moves about 0.013 rad per step), and the gripper is right 95% of the time. So the inference pipeline is correct and the model is undertrained. Small errors add up in closed loop.
+- Next: train longer, about 5k steps at batch 64 (about 10 epochs) on a faster GPU, then re-run `main.py`.
+
 ---
 
 **Run the scene:** `uv run python main.py` (or `uv run python -m simulation.environment`)
@@ -148,5 +171,7 @@ Quick test run: `uv run python -m data.collect --episodes 3 --name test --overwr
 1. Phase 5: SmolVLA fine-tuning in the cloud (`training/`, `training/smolvla_finetune.md`), using `--dataset.repo_id=sandhya056/panda_pick_place`.
    - Reference Colab notebook (official HF SmolVLA training): https://colab.research.google.com/github/huggingface/notebooks/blob/main/lerobot/training-smolvla.ipynb
    - In the notebook, pin `lerobot[smolvla]==0.4.4` (to match local) and set `HF_TOKEN`, because the dataset is private.
-   - First run is on **Kaggle**, with lerobot **0.7.1** from git main (not 0.4.4) and transformers 5.22. Before Phase 6, upgrade local lerobot to 0.7.1 or check that the checkpoint loads under 0.4.4.
+   - First run is on **Kaggle**, with lerobot **0.7.1** from git main and transformers 5.22. Local is now 0.7.0 (see above).
+   - Kaggle's T4 in fp32 took about 24 s per step at batch size 64 (258 steps in 1 h 45 min), too slow. Options: `--policy.use_amp=true --batch_size=32` for a short pipeline test, or rent an A100/L4 (about 1 h for 5k steps). Use `--policy.scheduler_decay_steps=<steps>` whenever `--steps` is under 30k.
+2. When the checkpoint is on the Hub: `uv run python -m inference.run_robot --episodes 10 --video outputs/smolvla/run.mp4`, then Phase 7 (`inference/evaluate.py`).
    - `smolvla_base` expects the cameras `observation.images.camera1/2/3` and a 6-D state/action. Map ours with `--rename_map='{"observation.images.front": "observation.images.camera1", "observation.images.wrist": "observation.images.camera2"}'`. The 8-D state/action is padded to 32 internally.
