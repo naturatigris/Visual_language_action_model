@@ -103,8 +103,37 @@ _Last updated: 2026-11-11_
 
   It also saves `lengths.png`, `ep<N>_trajectory.png` and `ep<N>_frames.png` to `outputs/inspect/<name>/`. **All checks pass** on the full dataset.
   - `uv run python -m data.inspect_dataset --name panda_pick_place [--episode N]`
-  - Interactive viewer: `uv run lerobot-dataset-viz --repo-id naturatigris/panda_pick_place --root data/lerobot/panda_pick_place --episode-index 0`
+  - Interactive viewer: `uv run lerobot-dataset-viz --repo-id sandhya056/panda_pick_place --root data/lerobot/panda_pick_place --episode-index 0`
 - The "does it really understand?" tests and the rule to keep object positions out of `observation.state` are now in PLAN.md Phase 7.
+
+### Step 16: Dataset on the HF Hub ✅
+- HF username is **`sandhya056`** (the GitHub user is `naturatigris`). `REPO_OWNER` in `data/collect.py` is now `sandhya056`.
+- **https://huggingface.co/datasets/sandhya056/panda_pick_place** is **private**, tagged with the codebase version `v3.0`, and holds 200 episodes / 31,255 frames.
+- `data/push_dataset.py` uploads the dataset and then downloads it from the Hub into a temp folder, checking that the episode and frame counts match. Verification **PASSES**.
+  - `uv run python -m data.push_dataset --name panda_pick_place [--verify-only] [--public]`
+  - The CLI is already logged in (`uv run hf auth whoami` → sandhya056). Cloud machines need `HF_TOKEN` set to read the private dataset.
+
+### Dataset pipeline: record → check → upload
+
+The three commands below rebuild `sandhya056/panda_pick_place` from scratch. For a different dataset, change `--name` in all three.
+
+```bash
+# 1. Record 200 successful expert episodes (seeds 0–199, about 21 min) into data/lerobot/panda_pick_place/
+#    Add --overwrite to replace an existing dataset; --seed sets the first layout seed (must stay < 100000)
+uv run python -m data.collect --episodes 200 --name panda_pick_place
+
+# 2. Print the summary and the 9 PASS/FAIL checks; plots go to outputs/inspect/panda_pick_place/
+#    --episode N picks which episode to plot (default 0)
+uv run python -m data.inspect_dataset --name panda_pick_place
+
+# 3. Upload to the HF Hub (private) and verify by reloading it from the Hub
+#    Needs `uv run hf auth login` once; --verify-only skips the upload, --public makes it public
+uv run python -m data.push_dataset --name panda_pick_place
+```
+
+Quick test run: `uv run python -m data.collect --episodes 3 --name test --overwrite`, then step 2 with `--name test`. Don't push the test set.
+
+---
 
 **Run the scene:** `uv run python main.py` (or `uv run python -m simulation.environment`)
 - In the viewer, use **Simulation → Load key** to return to the home pose. Don't press Backspace: it resets every joint to zero.
@@ -113,5 +142,4 @@ _Last updated: 2026-11-11_
 
 ## Next steps
 
-1. Step 16: push the dataset to the HF Hub as a **private** dataset (`huggingface-cli login` first). It needs an HF account / org name, which may differ from `naturatigris`.
-2. Phase 5: SmolVLA fine-tuning in the cloud (`training/`, `training/smolvla_finetune.md`).
+1. Phase 5: SmolVLA fine-tuning in the cloud (`training/`, `training/smolvla_finetune.md`), using `--dataset.repo_id=sandhya056/panda_pick_place`.

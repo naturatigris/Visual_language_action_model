@@ -28,7 +28,7 @@ from simulation.controller import RobotController
 from simulation.environment import PROJECT_DIR, TabletopEnv, load_config
 
 DATASET_DIR = PROJECT_DIR / "data" / "lerobot"
-REPO_OWNER = "naturatigris"          # only used as the dataset id; nothing is uploaded
+REPO_OWNER = "sandhya056"            # HF username; the dataset id is <owner>/<name> (upload: data/push_dataset.py)
 CAMERA_KEYS = {"front_camera": "observation.images.front", "wrist_camera": "observation.images.wrist"}
 JOINT_NAMES = [f"joint{i}" for i in range(1, 8)]
 

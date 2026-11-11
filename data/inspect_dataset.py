@@ -9,7 +9,7 @@ Prints a summary and PASS/FAIL integrity checks, and writes figures to outputs/i
     uv run python -m data.inspect_dataset --name panda_pick_place --episode 7
 
 LeRobot's own interactive viewer (rerun) also works on the local dataset:
-    uv run lerobot-dataset-viz --repo-id naturatigris/panda_pick_place --root data/lerobot/panda_pick_place --episode-index 0
+    uv run lerobot-dataset-viz --repo-id sandhya056/panda_pick_place --root data/lerobot/panda_pick_place --episode-index 0
 """
 
 import argparse
