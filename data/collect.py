@@ -25,7 +25,7 @@ from data.scripted_expert import ScriptedExpert
 from data.tasks import make_instruction
 from simulation.camera import CameraRenderer
 from simulation.controller import RobotController
-from simulation.environment import PROJECT_DIR, TabletopEnv
+from simulation.environment import PROJECT_DIR, TabletopEnv, load_config
 
 DATASET_DIR = PROJECT_DIR / "data" / "lerobot"
 REPO_OWNER = "naturatigris"          # only used as the dataset id; nothing is uploaded
@@ -75,6 +75,9 @@ def main() -> None:
     args = parser.parse_args()
 
     root = DATASET_DIR / args.name
+    eval_seed_start = load_config()["eval_seed_start"]
+    if args.seed >= eval_seed_start:
+        raise SystemExit(f"--seed {args.seed} is in the held-out eval range (>= {eval_seed_start}).")
     if root.exists():
         if not args.overwrite:
             raise SystemExit(f"{root} already exists. Use --overwrite to replace it, or pick another --name.")
@@ -89,10 +92,14 @@ def main() -> None:
     cameras = CameraRenderer(env.model, cfg["camera"]["height"], cfg["camera"]["width"],
                              cameras=tuple(cfg["camera"]["names"]))
     targets = cfg["targets"]
+    eval_seed_start = cfg["eval_seed_start"]
 
     kept, tried, seed, t0 = 0, 0, args.seed, time.time()
     try:
         while kept < args.episodes:
+            if seed >= eval_seed_start:
+                raise SystemExit(f"seed {seed} is in the held-out eval range (>= {eval_seed_start}); "
+                                 "pick a lower --seed or fewer --episodes.")
             env.reset(seed)
             rng = np.random.default_rng(10_000 + seed)          # same per-seed variations as the evaluator
             target = targets[tried % len(targets)]

@@ -357,6 +357,19 @@ The VLA decides and the controller only executes. **There is no scripted fallbac
 | Unseen paraphrases | Language generalization |
 | Repeated seeds | Consistency |
 
+**"Does it really understand?" tests.** These catch a policy that ignores the instruction or uses shortcuts:
+
+| Test | Pass means |
+|---|---|
+| Red/blue swap on the **same** scene (same seed, only the colour word changes) | It picks a different cube, so the language is really used |
+| Blank or nonsense instruction | It hesitates or behaves arbitrarily, rather than confidently doing one fixed thing |
+| Swap the cube colours or positions between runs | It follows the colour, not a memorized location |
+| Unseen paraphrases (`EVAL_TEMPLATES` in `data/tasks.py`) | The wording generalizes |
+
+Held-out layouts use seeds `>= eval_seed_start` from `configs/simulation.yaml`; `data/collect.py` refuses to record them.
+
+> **Rule:** never put object positions in `observation.state`. It stays as 7 joints + gripper, so the model has to find the cubes visually.
+
 | Metric | Purpose |
 |---|---|
 | Task success rate | % completed |

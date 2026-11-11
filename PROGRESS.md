@@ -2,7 +2,7 @@
 
 The full project plan is in [PLAN.md](PLAN.md). This file records where things stand.
 
-_Last updated: 2026-11-10_
+_Last updated: 2026-11-11_
 
 ---
 
@@ -86,38 +86,32 @@ _Last updated: 2026-11-10_
 - Checked on a 3-episode test set (`data/lerobot/test`, 438 frames, 2.6 MB): it loads with `LeRobotDataset`; images come back as (3,256,256) floats in 0–1; gripper actions are {0, 255}; joint action_t ≈ state_t+1 (mean 0.013 rad).
 - Harmless warning: `objc ... AVFFrameReceiver implemented in both` comes from Homebrew ffmpeg clashing with PyAV's bundled copy.
 
+### Phase 4: Dataset recorded + validated ✅ (Steps 14–15)
+- Git push now works; `origin/main` is up to date.
+- `configs/simulation.yaml` has `eval_seed_start: 100000`. Seeds at or above it are held out for evaluation, and `data/collect.py` refuses to record them.
+- **`data/lerobot/panda_pick_place`**: 200 episodes, 31,255 frames, 173 MB. Seeds 0–199, 0 discarded, 100 red / 100 blue, all 6 train templates used. Episodes are 128–193 frames (7.8 s average). Recording took about 21 min.
+- `data/inspect_dataset.py` prints a summary and 9 PASS/FAIL checks:
+  - no NaNs;
+  - no dropped frames;
+  - timestamps spaced 1/fps;
+  - gripper commands only {0, 255};
+  - the gripper goes open→closed→open exactly once;
+  - the fingers hold about 5 cm while closed;
+  - action_t ≈ state_t+1;
+  - every instruction is a train template;
+  - no eval paraphrase leaked in.
+
+  It also saves `lengths.png`, `ep<N>_trajectory.png` and `ep<N>_frames.png` to `outputs/inspect/<name>/`. **All checks pass** on the full dataset.
+  - `uv run python -m data.inspect_dataset --name panda_pick_place [--episode N]`
+  - Interactive viewer: `uv run lerobot-dataset-viz --repo-id naturatigris/panda_pick_place --root data/lerobot/panda_pick_place --episode-index 0`
+- The "does it really understand?" tests and the rule to keep object positions out of `observation.state` are now in PLAN.md Phase 7.
+
 **Run the scene:** `uv run python main.py` (or `uv run python -m simulation.environment`)
 - In the viewer, use **Simulation → Load key** to return to the home pose. Don't press Backspace: it resets every joint to zero.
 
 ---
 
-## Open issue: git push to GitHub
-
-- The local repo is fine: branch `main`, commit `01b4c22 feat: create basic 3d scene with mujoco(arm and cubes)`.
-- The remote `origin` is `https://github.com/naturatigris/Visual_language_action_model.git`.
-- First error: `repository not found`. From outside, the repo returned 404, so it is private or doesn't exist. The macOS Keychain has a GitHub login for account **`sandhya`**, not `naturatigris`. The nested Menagerie clone is **not** the cause; it is git-ignored.
-- Latest error: `Invalid username or token. Password authentication is not supported`. GitHub needs a **Personal Access Token**, not a password.
-- **To fix:**
-  1. Logged in as `naturatigris` on github.com, make sure the repo exists. If it doesn't, create it empty, without a README.
-  2. Create a token: Settings → Developer settings → Personal access tokens. A classic token needs the `repo` scope; a fine-grained one needs Contents: read/write on this repo.
-  3. `git remote set-url origin https://naturatigris@github.com/naturatigris/Visual_language_action_model.git`
-  4. Run `git push -u origin main` and paste the **token** when asked for a password.
-  5. If it still uses the old login, remove the old Keychain entry: Keychain Access → search `github.com` → delete it, then push again.
-  6. Optional: set the author for this repo only with `git config user.name "naturatigris"` and `git config user.email "<naturatigris email>"`.
-
----
-
 ## Next steps
 
-1. Fix the git push (above).
-2. Record the real dataset (for example 200 episodes, about 20 min), then Step 13: `data/inspect_dataset.py` to check gripper timing, labels and videos.
-3. Phase 5: SmolVLA fine-tuning in the cloud (`training/`).
-
-### Open suggestion (not yet added to PLAN.md)
-Add "does it really understand?" tests to Phase 7:
-- the red/blue swap test on the same scene
-- a blank-instruction test
-- swapping cube colours or positions
-- unseen paraphrases
-
-Also add the rule **never put object positions in `observation.state`**, so the model has to use vision.
+1. Step 16: push the dataset to the HF Hub as a **private** dataset (`huggingface-cli login` first). It needs an HF account / org name, which may differ from `naturatigris`.
+2. Phase 5: SmolVLA fine-tuning in the cloud (`training/`, `training/smolvla_finetune.md`).
