@@ -46,8 +46,12 @@ class EpisodeResult:
 
 
 def run_episode(env: TabletopEnv, policy: SmolVLAController, cameras: CameraRenderer, seed: int,
-                target: str | None, instruction: str, max_steps: int, on_frame=None) -> EpisodeResult:
-    """target is only used for scoring; None (instruction names no cube) = just run until the timeout."""
+                target: str | None, instruction: str, max_steps: int, on_frame=None,
+                early_stop: bool = True) -> EpisodeResult:
+    """target is only used for scoring; None (instruction names no cube) = just run until the timeout.
+
+    early_stop=False keeps running to the timeout (nicer videos); the episode is still scored by
+    whichever happened first, success or wrong object."""
     env.reset(seed)
     policy.reset()
     ctrl = RobotController(env.model, env.data)   # for state readout, joint limits and apply_action
@@ -71,13 +75,13 @@ def run_episode(env: TabletopEnv, policy: SmolVLAController, cameras: CameraRend
         if on_frame:
             on_frame(images, action)
 
-        if target is None:
+        if target is None or res.success or res.wrong_object:
             continue
         if env.wrong_object(target):
             res.wrong_object = True
-            break
-        if env.check_success(target):
+        elif env.check_success(target):
             res.success = True
+        if early_stop and (res.success or res.wrong_object):
             break
 
     res.sim_seconds = res.n_steps * ctrl.control_dt
@@ -100,6 +104,8 @@ def main() -> None:
     parser.add_argument("--device", default=None, help="mps / cpu / cuda (default: best available)")
     parser.add_argument("--video", default=None, help="save all episodes to this mp4 (front | wrist)")
     parser.add_argument("--view", action="store_true", help="watch live (macOS: run with `uv run mjpython`)")
+    parser.add_argument("--no-early-stop", action="store_true",
+                        help="keep running to the timeout after success / wrong object (scored by what happened first)")
     args = parser.parse_args()
 
     env = TabletopEnv()
@@ -129,7 +135,8 @@ def main() -> None:
             else:
                 target = cfg["targets"][ep % len(cfg["targets"])]
                 instruction = make_instruction(target, np.random.default_rng(20_000 + seed), args.split)
-            res = run_episode(env, policy, cameras, seed, target, instruction, max_steps, on_frame)
+            res = run_episode(env, policy, cameras, seed, target, instruction, max_steps, on_frame,
+                              early_stop=not args.no_early_stop)
             results.append(res)
             status = ("ran" if target is None else "ok  " if res.success
                       else "WRONG OBJECT" if res.wrong_object else "fail")
